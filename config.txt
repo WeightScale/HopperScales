@@ -1,0 +1,3 @@
+port:COM9
+speed:9600
+hosts:1
