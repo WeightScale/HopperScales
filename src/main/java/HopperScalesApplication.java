@@ -5,7 +5,7 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import modbus.ModbusSlaveNode;
+import modbus.ModbusMasterNode;
 import settings.Settings;
 
 import java.net.URL;
@@ -16,7 +16,7 @@ public class HopperScalesApplication extends Application {
     static List<Integer> hosts = new ArrayList<>();
     private Stage stage;
     private Settings settings;
-    private ModbusSlaveNode modbusSlaveNode;
+    private ModbusMasterNode modbusSlaveNode;
     private SerialPort serialPort;
 
     @Override
@@ -72,7 +72,7 @@ public class HopperScalesApplication extends Application {
             if(serialPort==null){
                 System.out.println("Serial порт " + properties.get("port")+" не найден. Укажите правильный порт в config.txt ");
                 try {
-                    modbusSlaveNode = new ModbusSlaveNode(serialPort);
+                    modbusSlaveNode = new ModbusMasterNode(serialPort);
                 } catch (ModbusInitException e) {
                     e.printStackTrace();
                 }finally {
@@ -81,7 +81,7 @@ public class HopperScalesApplication extends Application {
             }else {
                 if (serialPort.openPort()) {
                     try {
-                        modbusSlaveNode = new ModbusSlaveNode(serialPort);
+                        modbusSlaveNode = new ModbusMasterNode(serialPort);
                     } catch (ModbusInitException e) {
                         e.printStackTrace();
                     }finally {
