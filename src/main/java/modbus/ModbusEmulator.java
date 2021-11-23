@@ -94,8 +94,6 @@ public class ModbusEmulator extends Application {
         });
         threadUpdateImage.setDaemon(true);
         threadUpdateImage.start();
-
-
     }
 
     public static void main(String[] args) throws ModbusInitException {

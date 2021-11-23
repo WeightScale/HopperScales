@@ -14,10 +14,9 @@ import com.serotonin.modbus4j.sero.messaging.MessagingExceptionHandler;
 import javafx.application.Platform;
 import settings.Settings;
 
-public class ModbusMasterNode implements Runnable {
+public class ModbusMasterNode {
     private PortWrapper portWrapper;
     private ModbusMaster master;
-
 
     public ModbusMasterNode(SerialPort port) throws ModbusInitException {
         ModbusFactory modbusFactory = new ModbusFactory();
@@ -38,43 +37,32 @@ public class ModbusMasterNode implements Runnable {
         });
         master.setTimeout(200);
         master.init();
-
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (true){
-                    Settings.nodes.forEach(node -> {
-                        BaseLocator<Number> grossBaseLocator = BaseLocator.holdingRegister(node, 0, DataType.FOUR_BYTE_INT_UNSIGNED);
-                        BaseLocator<Number> netBaseLocator = BaseLocator.holdingRegister(node, 2, DataType.FOUR_BYTE_INT_UNSIGNED);
-                        try {
-
-                            Number gross = master.getValue(grossBaseLocator);
-                            Number net = master.getValue(netBaseLocator);
-
-                            System.out.printf("Node %d gross:%d net:%d\r\n",node,gross.intValue(),net.intValue());
-                            //System.out.printf("Node %d gross:%d \n\r",node,gross.intValue());
-                        } catch (ModbusTransportException e) {
-                            System.err.println(e.getCause());
-                            //master.destroy();
-                            //master.init();
-                        } catch (ErrorResponseException e) {
-                            System.err.println(e.getCause());
-                        }
-                        try {
-                            Thread.sleep(500);
-                        } catch (InterruptedException e) {
-                            System.out.println(e.getMessage());
-                        }
-                    });
+        Thread thread = new Thread(() -> {
+            while (true) {
+                Settings.nodes.forEach(node -> {
+                    BaseLocator<Number> grossBaseLocator = BaseLocator.holdingRegister(node, 0, DataType.FOUR_BYTE_INT_UNSIGNED);
+                    BaseLocator<Number> netBaseLocator = BaseLocator.holdingRegister(node, 2, DataType.FOUR_BYTE_INT_UNSIGNED);
+                    try {
+                        Number gross = master.getValue(grossBaseLocator);
+                        Number net = master.getValue(netBaseLocator);
+                        System.out.printf("Node %d gross:%d net:%d\r\n",node,gross.intValue(),net.intValue());
+                        //System.out.printf("Node %d gross:%d \n\r",node,gross.intValue());
+                    } catch (ModbusTransportException e) {
+                        System.err.println(e.getCause());
+                        //master.destroy();
+                        //master.init();
+                    } catch (ErrorResponseException e) {
+                        System.err.println(e.getCause());
+                    }
+                });
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    System.out.println(e.getMessage());
                 }
             }
         });
+        thread.setDaemon(true);
         thread.start();
-    }
-
-
-    @Override
-    public void run() {
-
     }
 }

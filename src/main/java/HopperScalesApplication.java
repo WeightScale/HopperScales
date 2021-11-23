@@ -1,6 +1,8 @@
 import com.fazecast.jSerialComm.SerialPort;
 import com.serotonin.modbus4j.exception.ModbusInitException;
 import console.ConsoleView;
+import database.Database;
+import database.Indication;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
@@ -9,6 +11,7 @@ import modbus.ModbusMasterNode;
 import settings.Settings;
 
 import java.net.URL;
+import java.sql.SQLException;
 import java.util.*;
 
 public class HopperScalesApplication extends Application {
@@ -117,8 +120,13 @@ public class HopperScalesApplication extends Application {
         }*/
     }
 
-    public static void main(String[] args)throws Exception{
-        launch(args);
+    public static void main(String[] args) {
+        try (Database database = new Database()) {
+            database.initialize();
+            launch(args);
+        } catch (SQLException exception) {
+            exception.printStackTrace();
+        }
     }
 
     @Override
