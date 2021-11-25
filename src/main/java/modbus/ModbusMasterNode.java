@@ -56,7 +56,7 @@ public class ModbusMasterNode {
                     }
                 });
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(Integer.parseInt(Settings.properties.getOrDefault("time","500")));
                 } catch (InterruptedException e) {
                     System.out.println(e.getMessage());
                 }
