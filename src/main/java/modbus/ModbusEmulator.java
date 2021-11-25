@@ -13,9 +13,11 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import settings.Settings;
 
 import java.net.URL;
 
+// TODO: не завершается программа
 public class ModbusEmulator extends Application {
     private boolean runnable=true;
     private ModbusSlaveSet slave;
@@ -28,7 +30,7 @@ public class ModbusEmulator extends Application {
         Thread.currentThread().setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(Thread thread, Throwable t) {
-                System.err.printf("Thread name: %s error: %s",thread.getName(), t.getMessage());
+                t.printStackTrace();
             }
         });
         final String[] args = getParameters().getRaw().toArray(new String[0]);
@@ -77,11 +79,11 @@ public class ModbusEmulator extends Application {
                     for (ProcessImage processImage : slave.getProcessImages()) {
                         try {
                             updateProcessImage((BasicProcessImage) processImage);
-                            //System.out.printf("Update node: %d\n\r",processImage.getSlaveId());
                         } catch (IllegalDataAddressException e) {
                             e.printStackTrace();
                         }
                     }
+
                     synchronized (slave) {
                         try {
                             slave.wait(500);
@@ -108,6 +110,8 @@ public class ModbusEmulator extends Application {
         processImage.setNumeric(RegisterRange.HOLDING_REGISTER, 0, DataType.FOUR_BYTE_INT_UNSIGNED, ++gross);
         processImage.setNumeric(RegisterRange.HOLDING_REGISTER, 2, DataType.FOUR_BYTE_INT_UNSIGNED, ++net);
         //processImage.setHoldingRegister(0, (short) randomNum);
+        System.out.printf("Node %d, gross = %d kg, net = %d kg\n\r", processImage.getSlaveId(), gross, net);
+
     }
 
     static BasicProcessImage getProcessImages(int slaveId) {
