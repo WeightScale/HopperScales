@@ -2,7 +2,6 @@ package settings;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,7 +14,7 @@ public class Settings {
     public static final int DEFAULT_PERIOD = 1;
     public static Map<String, String> properties = new HashMap<String, String>();
     public static List<Integer> nodes = new ArrayList<>();
-    public static int period;
+    public static int time;
 
     public Settings(String name) throws Exception {
         File file = new File(name);
@@ -38,18 +37,18 @@ public class Settings {
             nodes = Stream.of(str.replace(" ", "").split(",")).map(Integer::valueOf).collect(Collectors.toList());
         }
 
-        period = DEFAULT_PERIOD;
+        time = DEFAULT_PERIOD;
         String periodString = Settings.properties.get("period");
         if (periodString != null)
             try {
-                period = Integer.parseInt(periodString);
-                if (period < 1 || period > 3600) {
-                    System.err.println("Настройка period не находится в диапазоне: " + period);
-                    period = DEFAULT_PERIOD;
+                time = Integer.parseInt(periodString);
+                if (time < 1 || time > 3600) {
+                    System.err.println("Настройка time не находится в диапазоне: " + time);
+                    time = DEFAULT_PERIOD;
                 }
             } catch (NumberFormatException ignored) {
-                System.err.println("Настройка period не является целым числом: " + periodString);
+                System.err.println("Настройка time не является целым числом: " + periodString);
             }
-        period *= 1000;
+        time *= 1000;
     }
 }

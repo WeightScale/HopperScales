@@ -3,7 +3,6 @@ package modbus;
 import com.fazecast.jSerialComm.SerialPort;
 import com.serotonin.modbus4j.ModbusFactory;
 import com.serotonin.modbus4j.ModbusMaster;
-import com.serotonin.modbus4j.ModbusSlaveSet;
 import com.serotonin.modbus4j.code.DataType;
 import com.serotonin.modbus4j.exception.ErrorResponseException;
 import com.serotonin.modbus4j.exception.ModbusInitException;
@@ -12,7 +11,6 @@ import com.serotonin.modbus4j.ip.IpParameters;
 import com.serotonin.modbus4j.locator.BaseLocator;
 import com.serotonin.modbus4j.sero.messaging.MessagingExceptionHandler;
 import database.Database;
-import javafx.application.Platform;
 import settings.Settings;
 
 import java.sql.SQLException;
@@ -65,7 +63,7 @@ public class ModbusMasterNode {
                             System.err.println(e.getCause());
                         }
                     });
-                    Thread.sleep(Settings.period);
+                    Thread.sleep(Settings.time);
                 }
             } catch (InterruptedException e) {
                 System.out.println(e.getMessage());
