@@ -32,7 +32,7 @@ public class HopperScalesApplication extends Application {
             }
         });
         this.stage = primaryStage;
-        final String[] args = getParameters().getRaw().toArray(new String[0]);
+        //final String[] args = getParameters().getRaw().toArray(new String[0]);
         final ConsoleView console = new ConsoleView();
         final Scene scene = new Scene(console,800,600);
         final URL styleSheetUrl = getStyleSheetUrl();
