@@ -1,5 +1,6 @@
 # Default ignored files
 database.db
+config.txt
 target/
 
 # Project exclude paths

@@ -30,7 +30,7 @@ public class Database implements AutoCloseable {
 
     public void initialize() throws SQLException {
         if (!statement.executeQuery("SELECT `name` FROM `sqlite_master` WHERE `type` = 'table' AND `name` = 'indications'").next())
-            statement.execute("create table indications(`id` integer not null constraint indications_pk primary key autoincrement, `timestamp` timestamp default CURRENT_TIMESTAMP not null, `gross` integer not null, `net` integer not null)");
+            statement.execute("create table indications(`id` integer not null constraint indications_pk primary key autoincrement, `node` integer not null, `timestamp` timestamp default CURRENT_TIMESTAMP not null, `gross` integer not null, `net` integer not null)");
     }
 
     public final Connection connection;
@@ -63,8 +63,8 @@ public class Database implements AutoCloseable {
         connection.close();
     }
 
-    public void insertIndication(int gross, int net) throws SQLException {
-        execute("INSERT INTO `indications` (`gross`, `net`) VALUES (?, ?)", gross, net);
+    public void insertIndication(int node, int gross, int net) throws SQLException {
+        execute("INSERT INTO `indications` (`node`, `gross`, `net`) VALUES (?, ?, ?)", node, gross, net);
     }
 
     public Indication[] selectIndications(String where) throws SQLException {

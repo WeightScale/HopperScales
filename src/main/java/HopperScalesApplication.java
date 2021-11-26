@@ -123,10 +123,10 @@ public class HopperScalesApplication extends Application {
     public static void main(String[] args) {
         try (Database database = new Database()) {
             database.initialize();
-            launch(args);
         } catch (SQLException exception) {
             exception.printStackTrace();
         }
+        launch(args);
     }
 
     @Override
