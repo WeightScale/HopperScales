@@ -12,6 +12,8 @@
  */
 package console;
 
+import database.Database;
+import database.Excel;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -25,6 +27,7 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -68,8 +71,8 @@ public class ConsoleView extends BorderPane {
         throw new RuntimeException(e1);
       }
     }));
-    menu.getItems().add(createItem("Select xls", e -> {
-      System.out.println("Select xls");
+    menu.getItems().add(createItem("Экспорт в Excel", e -> {
+      System.out.println("Экспорт в Excel");
       System.out.println(showDialogXls());
     }));
 
@@ -100,8 +103,8 @@ public class ConsoleView extends BorderPane {
   String showDialogXls(){
     Dialog<String> dialog = new Dialog<>();
     dialog.setTitle("Экспорт данных");
-    dialog.setHeaderText("Это окно для выбора периода данных для экспорта в xls \n" +
-            "нажмите OK (или нажмите закрыть 'x').");
+    dialog.setHeaderText("Это окно для выбора периода данных для экспорта в Excel.\n" +
+            "После выбора нажмите OK (или нажмите закрыть 'x').");
     dialog.setResizable(true);
 
     Label label1 = new Label("Дата с: ");
@@ -126,11 +129,14 @@ public class ConsoleView extends BorderPane {
       public String call(ButtonType b) {
 
         if (b == buttonTypeOk) {
-          DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy");
+          DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
           LocalDate date = from.getValue();
-
-          String result = String.format("from: %s to: %s",from.getValue().format(formatter),to.getValue().format(formatter));
-          return result;//new PhoneBook(text1.getText(), text2.getText());
+          try {
+            Excel.export(Database.DATE_FORMAT.parse(from.getValue().format(formatter) + " 00:00:00"), Database.DATE_FORMAT.parse(to.getValue().format(formatter) + " 00:00:00"));
+          } catch (ParseException exception) {
+            System.err.println("Ошибка парсинга даты: " + exception);
+          }
+          return "";//new PhoneBook(text1.getText(), text2.getText());
         }
 
         return null;

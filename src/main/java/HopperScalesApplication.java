@@ -1,7 +1,10 @@
+// TODO: защита с помощью ключа
+// TODO: сохранение ошибок в логи
 import com.fazecast.jSerialComm.SerialPort;
 import com.serotonin.modbus4j.exception.ModbusInitException;
 import console.ConsoleView;
 import database.Database;
+import database.Excel;
 import database.Indication;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -12,6 +15,7 @@ import settings.Settings;
 
 import java.net.URL;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.util.*;
 
 public class HopperScalesApplication extends Application {

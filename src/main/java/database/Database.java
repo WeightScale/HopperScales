@@ -68,11 +68,11 @@ public class Database implements AutoCloseable {
     }
 
     public Indication[] selectIndications(String where) throws SQLException {
-        executeQuery("SELECT `id`, strftime('%s', `date`) AS `timestamp`, `gross`, `net` FROM `indications`" + (!where.isEmpty() ? " WHERE " + where : ""));
+        executeQuery("SELECT `id`, `node`, strftime('%s', `timestamp`) AS `timestamp_`, `gross`, `net` FROM `indications`" + (!where.isEmpty() ? " WHERE " + where : ""));
         ArrayList<Indication> indications = new ArrayList<>();
         while (results.next()) {
-            int timestamp = results.getInt("timestamp");
-            indications.add(new Indication(results.getInt("id"), new Date(results.getInt("timestamp") * 1000L), results.getInt("gross"), results.getInt("net")));
+            int timestamp = results.getInt("timestamp_");
+            indications.add(new Indication(results.getInt("id"), results.getInt("node"), new Date(results.getInt("timestamp_") * 1000L), results.getInt("gross"), results.getInt("net")));
         }
         return indications.toArray(new Indication[0]);
     }
@@ -82,6 +82,6 @@ public class Database implements AutoCloseable {
     }
 
     public Indication[] selectIndications(Date fromDate, Date toDate) throws SQLException {
-        return selectIndications(substitute("`timestamp` >= ? AND `timestamp` < ?", fromDate.getTime() / 1000, toDate.getTime() / 1000));
+        return selectIndications(substitute("CAST(`timestamp_` AS INTEGER) >= ? AND CAST(`timestamp_` AS INTEGER) < ?", fromDate.getTime() / 1000, toDate.getTime() / 1000));
     }
 }
