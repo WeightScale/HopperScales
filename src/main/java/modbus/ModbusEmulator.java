@@ -1,5 +1,6 @@
 package modbus;
 
+import com.fazecast.jSerialComm.SerialPort;
 import com.serotonin.modbus4j.*;
 import com.serotonin.modbus4j.code.DataType;
 import com.serotonin.modbus4j.code.RegisterRange;
@@ -15,12 +16,25 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import settings.Settings;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 // TODO: не завершается программа
 public class ModbusEmulator extends Application {
     private boolean runnable=true;
+    public static Map<String, String> properties = new HashMap<String, String>();
+    public static List<Integer> nodes = new ArrayList<>();
+    private PortWrapper portWrapper;
     private ModbusSlaveSet slave;
+    private SerialPort serialPort;
     //private static BasicProcessImage processImage;
     static BaseLocator<Number> grossBaseLocator = BaseLocator.holdingRegister(1, 0, DataType.FOUR_BYTE_INT_UNSIGNED);
     static BaseLocator<Number> netBaseLocator = BaseLocator.holdingRegister(1, 2, DataType.FOUR_BYTE_INT_UNSIGNED);
@@ -33,6 +47,7 @@ public class ModbusEmulator extends Application {
                 t.printStackTrace();
             }
         });
+
         final String[] args = getParameters().getRaw().toArray(new String[0]);
         final ConsoleView console = new ConsoleView();
         final Scene scene = new Scene(console,800,600);
@@ -53,12 +68,62 @@ public class ModbusEmulator extends Application {
         System.setIn(console.getIn());
         System.setErr(console.getOut());
 
-        slave = new ModbusFactory().createTcpSlave(false);
+        try{
+            File file = new File("config_emulator.txt");
+            InputStream inputStream = null;
+            StringBuilder sb = new StringBuilder();
+            inputStream = new FileInputStream(file);
+            for (int ch; (ch = inputStream.read()) != -1; ) {
+                sb.append((char) ch);
+            }
+
+            String config = sb.toString();
+            String[] pairs = config.split("\r\n");
+            for (int i=0;i<pairs.length;i++) {
+                String pair = pairs[i];
+                String[] keyValue = pair.split(":");
+                properties.put(keyValue[0], keyValue[1]);
+            }
+            if(properties.containsKey("hosts")){
+                String str = properties.get("hosts");
+                nodes = Stream.of(str.replace(" ", "").split(",")).map(Integer::valueOf).collect(Collectors.toList());
+            }
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+
+        if (serialPort != null) {
+            System.out.println("Serial port close");
+            serialPort.closePort();
+            serialPort = null;
+        }
+        SerialPort[] ports = SerialPort.getCommPorts();
+        for (SerialPort port : ports) {
+            System.out.println("[Найден Порт]"+port.getSystemPortName());
+            if (port.getSystemPortName().equals(properties.get("port"))) {
+                serialPort = port;
+                serialPort.setBaudRate(Integer.parseInt(properties.get("speed")));
+                System.out.println("Serial порт " + properties.get("port")+" выбран");
+                break;
+            }
+        }
+        if(serialPort==null){
+            System.out.println("Serial порт " + properties.get("port")+" не найден. Укажите правильный порт в config.txt ");
+            System.out.println("Запущен TCP Slave ");
+            slave = new ModbusFactory().createTcpSlave(false);
+        }else {
+            portWrapper = new PortWrapper(serialPort);
+            slave = new ModbusFactory().createRtuSlave(portWrapper);
+        }
         //processImage = getProcessImages(1);
-        slave.addProcessImage(getProcessImages(1));
-        slave.addProcessImage(getProcessImages(2));
-        slave.addProcessImage(getProcessImages(3));
-        slave.addProcessImage(getProcessImages(4));
+        nodes.forEach(node -> {
+            slave.addProcessImage(getProcessImages(node));
+        });
+
+        //slave.addProcessImage(getProcessImages(1));
+        //slave.addProcessImage(getProcessImages(2));
+        //slave.addProcessImage(getProcessImages(3));
+        //slave.addProcessImage(getProcessImages(4));
         Thread threadSlaveStart = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -83,10 +148,10 @@ public class ModbusEmulator extends Application {
                             e.printStackTrace();
                         }
                     }
-
+                    System.out.println();
                     synchronized (slave) {
                         try {
-                            slave.wait(500);
+                            slave.wait(Integer.parseInt(properties.getOrDefault("time","1000")));
                         } catch (InterruptedException e) {
                             System.err.println(e.getMessage());
                         }
@@ -100,6 +165,12 @@ public class ModbusEmulator extends Application {
 
     public static void main(String[] args) throws ModbusInitException {
         launch(args);
+    }
+
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+        slave.stop();
     }
 
     static void updateProcessImage(BasicProcessImage processImage) throws IllegalDataAddressException {

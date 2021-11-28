@@ -36,7 +36,7 @@ public class ModbusMasterNode {
                 System.out.println(e.getCause().getMessage());
             }
         });
-        master.setTimeout(200);
+        master.setTimeout(500);
         master.init();
         Thread thread = new Thread(() -> {
             try {
@@ -56,13 +56,15 @@ public class ModbusMasterNode {
 
                             //System.out.printf("Node %d gross:%d \n\r",node,gross.intValue());
                         } catch (ModbusTransportException e) {
-                            System.err.println(e.getCause());
+                            System.out.format("Node %d ERROR %s \n\r",node,e.getCause().getMessage());
+                            //System.err.println(e.getCause().getMessage());
                             //master.destroy();
                             //master.init();
                         } catch (ErrorResponseException e) {
-                            System.err.println(e.getCause());
+                            System.err.println(e.getMessage());
                         }
                     });
+                    System.out.println();
                     Thread.sleep(Settings.time);
                 }
             } catch (InterruptedException e) {
@@ -71,5 +73,9 @@ public class ModbusMasterNode {
         });
         thread.setDaemon(true);
         thread.start();
+    }
+
+    public void stop(){
+        master.destroy();
     }
 }

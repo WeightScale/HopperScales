@@ -136,5 +136,6 @@ public class HopperScalesApplication extends Application {
     @Override
     public void stop() throws Exception {
         super.stop();
+        modbusSlaveNode.stop();
     }
 }
