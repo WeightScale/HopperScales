@@ -12,6 +12,7 @@
  */
 package console;
 
+import com.google.gson.JsonObject;
 import database.Database;
 import database.Excel;
 import javafx.application.Platform;
@@ -21,6 +22,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.util.Callback;
+import org.greenrobot.eventbus.EventBus;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -71,11 +73,20 @@ public class ConsoleView extends BorderPane {
         throw new RuntimeException(e1);
       }
     }));
+    menu.getItems().add(createItem("Scan nodes", e -> {
+      JsonObject json = new JsonObject();
+      json.addProperty("cmd","scan_nodes");
+      EventBus.getDefault().post(json.toString());
+    }));
+    menu.getItems().add(createItem("Stop scan nodes", e -> {
+      JsonObject json = new JsonObject();
+      json.addProperty("cmd","scan_stop");
+      EventBus.getDefault().post(json.toString());
+    }));
     menu.getItems().add(createItem("Экспорт в Excel", e -> {
       System.out.println("Экспорт в Excel");
       System.out.println(showDialogXls());
     }));
-
     menu.getItems().add(createItem("Exit", e -> {
       System.out.println("Exit");
       Platform.exit();

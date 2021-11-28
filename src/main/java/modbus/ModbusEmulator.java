@@ -88,79 +88,76 @@ public class ModbusEmulator extends Application {
                 String str = properties.get("hosts");
                 nodes = Stream.of(str.replace(" ", "").split(",")).map(Integer::valueOf).collect(Collectors.toList());
             }
+
+            if (serialPort != null) {
+                System.out.println("Serial port close");
+                serialPort.closePort();
+                serialPort = null;
+            }
+            SerialPort[] ports = SerialPort.getCommPorts();
+            for (SerialPort port : ports) {
+                System.out.println("[Найден Порт]"+port.getSystemPortName());
+                if (port.getSystemPortName().equals(properties.get("port"))) {
+                    serialPort = port;
+                    serialPort.setBaudRate(Integer.parseInt(properties.get("speed")));
+                    System.out.println("Serial порт " + properties.get("port")+" выбран");
+                    break;
+                }
+            }
+            if(serialPort==null){
+                System.out.println("Serial порт " + properties.get("port")+" не найден. Укажите правильный порт в config.txt ");
+                System.out.println("Запущен TCP Slave ");
+                slave = new ModbusFactory().createTcpSlave(false);
+            }else {
+                portWrapper = new PortWrapper(serialPort);
+                slave = new ModbusFactory().createRtuSlave(portWrapper);
+            }
+
+            nodes.forEach(node -> {
+                slave.addProcessImage(getProcessImages(node));
+            });
+
+            Thread threadSlaveStart = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        slave.start();
+                    }catch (ModbusInitException e) {
+                        System.err.println(e.getMessage());
+                    }
+                }
+            });
+            threadSlaveStart.setDaemon(true);
+            threadSlaveStart.start();
+
+            Thread threadUpdateImage = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    while (true) {
+                        for (ProcessImage processImage : slave.getProcessImages()) {
+                            try {
+                                updateProcessImage((BasicProcessImage) processImage);
+                            } catch (IllegalDataAddressException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        System.out.println();
+                        synchronized (slave) {
+                            try {
+                                slave.wait(Integer.parseInt(properties.getOrDefault("time","1000")));
+                            } catch (InterruptedException e) {
+                                System.err.println(e.getMessage());
+                            }
+                        }
+                    }
+                }
+            });
+            threadUpdateImage.setDaemon(true);
+            threadUpdateImage.start();
         }catch (Exception e){
             System.out.println(e.getMessage());
         }
 
-        if (serialPort != null) {
-            System.out.println("Serial port close");
-            serialPort.closePort();
-            serialPort = null;
-        }
-        SerialPort[] ports = SerialPort.getCommPorts();
-        for (SerialPort port : ports) {
-            System.out.println("[Найден Порт]"+port.getSystemPortName());
-            if (port.getSystemPortName().equals(properties.get("port"))) {
-                serialPort = port;
-                serialPort.setBaudRate(Integer.parseInt(properties.get("speed")));
-                System.out.println("Serial порт " + properties.get("port")+" выбран");
-                break;
-            }
-        }
-        if(serialPort==null){
-            System.out.println("Serial порт " + properties.get("port")+" не найден. Укажите правильный порт в config.txt ");
-            System.out.println("Запущен TCP Slave ");
-            slave = new ModbusFactory().createTcpSlave(false);
-        }else {
-            portWrapper = new PortWrapper(serialPort);
-            slave = new ModbusFactory().createRtuSlave(portWrapper);
-        }
-        //processImage = getProcessImages(1);
-        nodes.forEach(node -> {
-            slave.addProcessImage(getProcessImages(node));
-        });
-
-        //slave.addProcessImage(getProcessImages(1));
-        //slave.addProcessImage(getProcessImages(2));
-        //slave.addProcessImage(getProcessImages(3));
-        //slave.addProcessImage(getProcessImages(4));
-        Thread threadSlaveStart = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    slave.start();
-                }catch (ModbusInitException e) {
-                    System.err.println(e.getMessage());
-                }
-            }
-        });
-        threadSlaveStart.setDaemon(true);
-        threadSlaveStart.start();
-
-        Thread threadUpdateImage = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    for (ProcessImage processImage : slave.getProcessImages()) {
-                        try {
-                            updateProcessImage((BasicProcessImage) processImage);
-                        } catch (IllegalDataAddressException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    System.out.println();
-                    synchronized (slave) {
-                        try {
-                            slave.wait(Integer.parseInt(properties.getOrDefault("time","1000")));
-                        } catch (InterruptedException e) {
-                            System.err.println(e.getMessage());
-                        }
-                    }
-                }
-            }
-        });
-        threadUpdateImage.setDaemon(true);
-        threadUpdateImage.start();
     }
 
     public static void main(String[] args) throws ModbusInitException {

@@ -1,4 +1,4 @@
 port:COM9
 speed:9600
-hosts:1,2,3,5
+hosts:1,2,3,5,12
 time:1000
