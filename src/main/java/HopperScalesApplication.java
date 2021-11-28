@@ -160,6 +160,7 @@ public class HopperScalesApplication extends Application {
                 });
                System.out.println("Добавте найденные nodes в config.txt в секцию nodes:"+sb.toString());
             }
+            modbusSlaveNode.setTimeout(500);
             modbusSlaveNode.setPause(false);
         }
 

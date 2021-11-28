@@ -11,24 +11,21 @@ import com.serotonin.modbus4j.ip.IpParameters;
 import com.serotonin.modbus4j.locator.BaseLocator;
 import com.serotonin.modbus4j.msg.ModbusRequest;
 import com.serotonin.modbus4j.msg.ReadHoldingRegistersRequest;
-import com.serotonin.modbus4j.sero.messaging.MessagingExceptionHandler;
 import com.serotonin.modbus4j.sero.util.ProgressiveTask;
 import com.serotonin.modbus4j.sero.util.ProgressiveTaskListener;
 import database.Database;
 import settings.Settings;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 public class ModbusMasterNode {
-    private PortWrapper portWrapper;
-    private ModbusMaster master;
+    private final ModbusMaster master;
     private boolean pause= false;
 
     public ModbusMasterNode(SerialPort port) throws ModbusInitException {
         ModbusFactory modbusFactory = new ModbusFactory();
-        portWrapper = new PortWrapper(port);
+        PortWrapper portWrapper = new PortWrapper(port);
         if(port != null){
             master = modbusFactory.createRtuMaster(portWrapper);
         }else{
@@ -37,12 +34,7 @@ public class ModbusMasterNode {
             params.setPort(502);
             master=modbusFactory.createTcpMaster(params,false);
         }
-        master.setExceptionHandler(new MessagingExceptionHandler() {
-            @Override
-            public void receivedException(Exception e) {
-                System.out.println(e.getCause().getMessage());
-            }
-        });
+        master.setExceptionHandler(e -> System.out.println(e.getCause().getMessage()));
         master.setTimeout(500);
         master.init();
         Thread thread = new Thread(() -> {
@@ -103,7 +95,7 @@ public class ModbusMasterNode {
 
             protected void runImpl() {
                 try {
-                    master.send((ModbusRequest)(new ReadHoldingRegistersRequest(this.node, 0, 2)));
+                    master.send(new ReadHoldingRegistersRequest(this.node, 0, 2));
                     listener.nodeFound(this.node);
                 } catch (ModbusTransportException e) {
                     //System.out.format("Node %d not found\n\r",this.node);
@@ -122,9 +114,9 @@ public class ModbusMasterNode {
         return task;
     }
 
-    //public boolean isPause(){
-    //    return this.pause;
-    //}
+    public void setTimeout(int timeout){
+        master.setTimeout(timeout);
+    }
 
     public void setPause(boolean pause){
         this.pause=pause;
