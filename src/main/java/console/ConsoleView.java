@@ -32,6 +32,8 @@ import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -44,6 +46,9 @@ public class ConsoleView extends BorderPane {
   private final PrintStream out;
   private final TextArea textArea;
   private final InputStream in;
+
+  public static PrintStream standardOut;
+  public static PrintStream consoleOut;
 
   public ConsoleView() {
     this(Charset.defaultCharset());
@@ -65,7 +70,7 @@ public class ConsoleView extends BorderPane {
     this.in = stream.getIn();
 
     final ContextMenu menu = new ContextMenu();
-    menu.getItems().add(createItem("Clear console", e -> {
+    menu.getItems().add(createItem("Очистить консоль", e -> {
       try {
         stream.clear();
         this.textArea.clear();
@@ -73,12 +78,18 @@ public class ConsoleView extends BorderPane {
         throw new RuntimeException(e1);
       }
     }));
-    menu.getItems().add(createItem("Scan nodes", e -> {
+    menu.getItems().add(createItem("Старт консоли", e -> {
+      System.setOut(consoleOut);
+    }));
+    menu.getItems().add(createItem("Пауза консоли", e -> {
+      System.setOut(standardOut);
+    }));
+    menu.getItems().add(createItem("Сканировать порты", e -> {
       JsonObject json = new JsonObject();
       json.addProperty("cmd","scan_nodes");
       EventBus.getDefault().post(json.toString());
     }));
-    menu.getItems().add(createItem("Stop scan nodes", e -> {
+    menu.getItems().add(createItem("Остановить сканирование", e -> {
       JsonObject json = new JsonObject();
       json.addProperty("cmd","scan_stop");
       EventBus.getDefault().post(json.toString());
@@ -87,7 +98,7 @@ public class ConsoleView extends BorderPane {
       System.out.println("Экспорт в Excel");
       System.out.println(showDialogXls());
     }));
-    menu.getItems().add(createItem("Exit", e -> {
+    menu.getItems().add(createItem("Выход", e -> {
       System.out.println("Exit");
       Platform.exit();
     }));
@@ -143,7 +154,10 @@ public class ConsoleView extends BorderPane {
           DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
           LocalDate date = from.getValue();
           try {
-            Excel.export(Database.DATE_FORMAT.parse(from.getValue().format(formatter) + " 00:00:00"), Database.DATE_FORMAT.parse(to.getValue().format(formatter) + " 00:00:00"));
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(Database.DATE_FORMAT.parse(to.getValue().format(formatter) + " 00:00:00"));
+            calendar.add(Calendar.DATE, 1);
+            Excel.export(Database.DATE_FORMAT.parse(from.getValue().format(formatter) + " 00:00:00"), calendar.getTime());
           } catch (ParseException exception) {
             System.err.println("Ошибка парсинга даты: " + exception);
           }

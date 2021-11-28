@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-// TODO: не завершается программа
 public class ModbusEmulator extends Application {
     private boolean runnable=true;
     public static Map<String, String> properties = new HashMap<String, String>();

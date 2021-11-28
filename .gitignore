@@ -3,6 +3,7 @@ database.db
 config.txt
 target/
 reports/
+logs/
 
 # Project exclude paths
 /out/

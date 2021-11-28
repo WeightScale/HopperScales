@@ -1,5 +1,4 @@
 // TODO: защита с помощью ключа
-// TODO: сохранение ошибок в логи
 import com.fazecast.jSerialComm.SerialPort;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -22,7 +21,9 @@ import settings.Settings;
 
 import java.awt.*;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.URL;
 import java.sql.SQLException;
 import java.text.ParseException;
@@ -37,6 +38,7 @@ public class HopperScalesApplication extends Application {
     private ModbusMasterNode modbusSlaveNode;
     private SerialPort serialPort;
     ProgressiveTask scanTask = null;
+
 
     @Override
     public void start(Stage primaryStage) /*throws Exception*/ {
@@ -64,10 +66,19 @@ public class HopperScalesApplication extends Application {
             //}
         });
         primaryStage.show();
-
-        System.setOut(console.getOut());
+        ConsoleView.standardOut = System.out;
+        ConsoleView.consoleOut = console.getOut();
+        System.setOut(ConsoleView.consoleOut);
         System.setIn(console.getIn());
-        System.setErr(console.getOut());
+        File logs = new File("logs");
+        if (!logs.exists())
+            logs.mkdir();
+        String date = Database.DATE_FORMAT.format(new Date()).substring(0, 10);
+        try {
+            System.setErr(new PrintStream(new FileOutputStream(new File("logs\\" + date + ".txt"), true)));
+        } catch (IOException exception) {
+            exception.printStackTrace();
+        }
 
         try {
             settings = new Settings("config.txt");

@@ -17,6 +17,7 @@ import database.Database;
 import settings.Settings;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ModbusMasterNode {
@@ -44,6 +45,7 @@ public class ModbusMasterNode {
                         Thread.sleep(100);
                         continue;
                     }
+                    ArrayList<String> nodesMessages = new ArrayList<>();
                     Settings.nodes.forEach(node -> {
                         BaseLocator<Number> grossBaseLocator = BaseLocator.holdingRegister(node, 0, DataType.FOUR_BYTE_INT_UNSIGNED);
                         BaseLocator<Number> netBaseLocator = BaseLocator.holdingRegister(node, 2, DataType.FOUR_BYTE_INT_UNSIGNED);
@@ -52,14 +54,15 @@ public class ModbusMasterNode {
                             Number net = master.getValue(netBaseLocator);
                             try (Database database = new Database()) {
                                 database.insertIndication(node, gross.intValue(), net.intValue());
-                                System.out.printf("Node %d, gross = %d kg, net = %d kg\r\n", node, gross.intValue(), net.intValue());
+                                nodesMessages.add("Т" + node + ": Б = " + gross.intValue() + ", Н = " + net.intValue());
+                                //System.out.printf("Node %d, gross = %d kg, net = %d kg\r\n", node, gross.intValue(), net.intValue());
                             } catch (SQLException exception) {
                                 exception.printStackTrace();
                             }
-
                             //System.out.printf("Node %d gross:%d \n\r",node,gross.intValue());
                         } catch (ModbusTransportException e) {
-                            System.out.format("Node %d ERROR %s \n\r",node,e.getCause().getMessage());
+                            nodesMessages.add("Т" + node + ": ОШИБКА");
+                            //System.out.format("Node %d ошибка %s \n\r",node,e.getCause().getMessage());
                             //System.err.println(e.getCause().getMessage());
                             //master.destroy();
                             //master.init();
@@ -67,7 +70,7 @@ public class ModbusMasterNode {
                             System.err.println(e.getMessage());
                         }
                     });
-                    System.out.println();
+                    System.out.println(String.join(";  ", nodesMessages));
                     Thread.sleep(Settings.time);
                 }
             } catch (InterruptedException e) {
